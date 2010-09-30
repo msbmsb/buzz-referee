@@ -1,0 +1,4 @@
+cron:
+- description: Buzz Referee
+  url: /ref
+  schedule: every 5 minutes
