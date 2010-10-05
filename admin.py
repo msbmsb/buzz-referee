@@ -20,6 +20,7 @@ import handlers.admin
 def main():
     application = webapp.WSGIApplication([
       ('/admin', handlers.admin.AdminHandler),
+      ('/admin/', handlers.admin.AdminHandler),
       ('/admin/loaddb', handlers.loaddb.LoadDbHandler)
     ], debug=True)
     util.run_wsgi_app(application)

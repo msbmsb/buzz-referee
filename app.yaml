@@ -7,10 +7,14 @@ handlers:
 - url: /css
   static_dir: css
 
+- url: /favicon.ico
+  static_files: images/favicon.ico
+  upload: images/favicon.ico
+
 - url: /images
   static_dir: images
 
-- url: /admin*
+- url: /admin.*
   script: admin.py
   login: admin
 
