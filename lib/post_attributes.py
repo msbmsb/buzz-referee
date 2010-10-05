@@ -122,5 +122,5 @@ class PostAttributes(object):
     matches = []
     for a in self.attributes.keys():
       if self.attributes[a] == winner_id:
-        matches.add(a)
+        matches.append(a)
     return matches

@@ -15,8 +15,12 @@ import models.phrase
 
 class LoadDbHandler(webapp.RequestHandler):
   def get(self):
+    self.response.out.write('Loading DB<br />')
     self.loaddb()
     self.response.out.write('Saved data:<br />')
+
+  def post(self):
+    self.response.out.write('Try again<br />')
 
   def loaddb(self):
     # clear db first
