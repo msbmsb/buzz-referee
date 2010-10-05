@@ -210,7 +210,6 @@ input, textarea, select {
 
 .post h1 {
 	padding: 0px 0 0 0px;
-	background: url(/images/img08.jpg) no-repeat left top;
 	font-size: 24px;
 	color: #ffffff;
 }
@@ -287,7 +286,6 @@ input, textarea, select {
 	width: 250px;
 	padding: 8px 0 0 0px;
 	margin-bottom: 10px;
-	background: url(/images/img07.jpg) no-repeat left top;
 	font-size: 20px;
 	color: #ffffff;
 }
