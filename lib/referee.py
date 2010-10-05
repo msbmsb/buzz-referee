@@ -87,7 +87,7 @@ class Referee(object):
     # {intro} {winner_name} {has_won} {begin_reason} {adj} {reason} {end}
     begin = self.get_random_phrase('begin')
     adj = self.get_random_phrase('adj_pos')
-    return '{0} {1} {2} {3}{4} {5} {6}. {7}'.format(
+    return "{0} {1} {2} {3}{4} {5}{6}. {7}".format(
       self.get_random_phrase('intro'),
       self.winner.name,
       self.get_random_phrase('has_won'),
@@ -106,7 +106,7 @@ class Referee(object):
       return ''
     r = random.randrange(1, cnt, 1)
     phrase = phrases.filter('type =',type_in).fetch(limit = 1, offset = r)[0]
-    return phrase.str.replace(utils.consts.NAME_PLACEHOLDER, self.winner.name).replace('  ', ' ')
+    return phrase.str.replace(utils.consts.NAME_PLACEHOLDER, '*'+self.winner.name+'*').replace('  ', ' ')
 
   # given that the previsoud 'begin' phrase may end with a determiner,
   # make sure the DT agrees with the next adjective
