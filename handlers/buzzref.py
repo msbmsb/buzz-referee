@@ -149,3 +149,33 @@ class BuzzRefereeHandler(webapp.RequestHandler):
 
     logging.info('returning: ' + ret_str)
     return ret_str
+
+  # just for testing
+  def force_post(self):
+    # get consumption posts
+    posts = self.client.posts(type_id='@consumption', user_id='@me').data
+
+    ret_str = ''
+
+    for p in posts:
+      if p.placeholder is None and \
+          p.actor.id != utils.consts.BUZZREFEREE_ID:
+        try:
+          post = self.client.post(p.id).data
+          decision = lib.referee.Referee(post).referee_decision
+          if decision is not None:
+            # post here
+            try:
+              new_comment = buzz.Comment(content=decision, post_id=post.id)
+              #self.client.create_comment(new_comment)
+              ret_str = "Writing comment: " + decision + "<br />" + \
+                  "to post.id = " + post.id
+            except:
+              ret_str = "<h2>Error:</h2><br />" + "Writing comment: " + \
+                  decision + "<br />" + "to post.id = " + post.id + \
+                  "<br />" + "<pre>"  + traceback.format_exc()  + "</pre>"
+        except:
+          ret_str = "<h2>Error:</h2><br />" + "Getting post: " + post.id + \
+              "<br />" + "<pre>"  + traceback.format_exc()  + "</pre>"
+
+    return ret_str
