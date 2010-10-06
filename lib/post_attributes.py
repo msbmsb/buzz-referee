@@ -27,6 +27,7 @@ post attributes extracted:
 * License:      MIT License: http://creativecommons.org/licenses/MIT/
 """
 
+import types
 import re
 import buzz 
 import utils.consts
@@ -38,6 +39,16 @@ class PostAttributes(object):
     self.commenters = {}
     self.attributes['op'] = post.actor.id
     self.update_attributes(post)
+
+  def to_str(self):
+    ret_str = ''
+    for k in self.attributes:
+      if self.attributes[k] is not None:
+        ret_str += k + ":" + str(self.attributes[k]) + " "
+#         ret_str += "%s: %s " % {k, str(self.attributes[k])}
+      else:
+        ret_str += "%s: None " % k
+    return ret_str
 
   def get(self, key):
     if key in self.attributes:
@@ -121,6 +132,14 @@ class PostAttributes(object):
   def get_matches(self, winner_id):
     matches = []
     for a in self.attributes.keys():
-      if self.attributes[a] == winner_id:
-        matches.append(a)
+      if type(self.attributes[a]) is types.ListType:
+        if winner_id in self.attributes[a][1]:
+          if (a == 'fc' or a == 'fl') and \
+              len(self.attributes[a][1]) > (len(self.commenters) * 0.25):
+            continue
+          matches.append(a)
+      elif type(self.attributes[a]) is types.UnicodeType or \
+          type(self.attributes[a]) is types.StringType:
+        if self.attributes[a] == winner_id:
+          matches.append(a)
     return matches
