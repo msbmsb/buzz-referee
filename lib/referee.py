@@ -67,7 +67,7 @@ class Referee(object):
 
     # even if there are no matching attributes, don't self-doubt!
     if len(matching_attribs) == 0:
-      return sef.get_random_phrase('no_reason')
+      return self.get_random_phrase('no_reason')
 
     # in the case of multiple matching attributes, 
     # select one at random
@@ -87,34 +87,37 @@ class Referee(object):
     # {intro} {winner_name} {has_won} {begin_reason} {adj} {reason} {end}
     begin = self.get_random_phrase('begin')
     adj = self.get_random_phrase('adj_pos')
-    return "{0} {1} {2} {3}{4} {5}{6}. {7}".format(
-      self.get_random_phrase('intro'),
-      self.winner.name,
-      self.get_random_phrase('has_won'),
-      begin,
-      self.get_DT(begin, adj),
-      adj,
-      self.get_random_phrase(winning_reason),
-      self.get_random_phrase('end')
-    )
+    return "%(intro)s %(name)s %(haswon)s %(begin)s%(dt)s %(adj)s%(reason)s." % {
+      'intro': self.get_random_phrase('intro'),
+      'name': '*'+self.winner.name+'*',
+      'haswon': self.get_random_phrase('has_won'),
+      'begin': begin,
+      'dt': self.get_DT(begin, adj),
+      'adj': adj,
+      'reason': self.get_random_phrase(winning_reason)
+    }
 
   # select a random phrase from the given type
   def get_random_phrase(self, type_in):
+    random.seed()
     phrases = models.phrase.Phrase.all()
     cnt = phrases.filter('type =',type_in).count(1000)
     if cnt == 0:
       return ''
-    r = random.randrange(1, cnt, 1)
-    phrase = phrases.filter('type =',type_in).fetch(limit = 1, offset = r)[0]
+    if cnt == 1:
+      r = 1
+    else:
+      r = random.randrange(1, cnt, 1)
+    phrase = phrases.filter('type =',type_in).fetch(limit = 1, offset = r-1)[0]
     return phrase.str.replace(utils.consts.NAME_PLACEHOLDER, '*'+self.winner.name+'*').replace('  ', ' ')
 
   # given that the previsoud 'begin' phrase may end with a determiner,
   # make sure the DT agrees with the next adjective
   def get_DT(self, begin, adj):
     if begin[-1] != 'a':
-      return ' '
+      return '' 
 
     if adj[0].lower() in ['a','e','i','o','u']:
       return 'n'
     else:
-      return ' '
+      return ''
