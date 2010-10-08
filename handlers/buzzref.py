@@ -60,7 +60,7 @@ class BuzzRefereeHandler(webapp.RequestHandler):
       try:
         result_task = taskqueue.Task(url='/ref')
         result_task.add()
-      except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError), e:
+      except:
         result_task = None
 
     template_values = {
@@ -102,9 +102,9 @@ class BuzzRefereeHandler(webapp.RequestHandler):
   # filtering by dates is not desired - old posts are just as eligible as new
   def queue_ref(self):
     # get consumption posts
-    posts = self.client.posts(type_id='@consumption', user_id='@me').data
+    posts = self.client.posts(type_id='@consumption', user_id='@me', max_results=5000).data
 
-    ret_str = ''
+    ret_str = '#posts: ' + str(len(posts)) + '<br />'
 
     for post in posts:
       if post.placeholder is None and \
@@ -120,8 +120,9 @@ class BuzzRefereeHandler(webapp.RequestHandler):
           )
           result_task.add()
           ret_str += 'Added post id: ' + post.id + '<br />'
-        except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError), e:
+        except:
           result_task = None
+          ret_str += 'taskqueue exception<br />'
 
     return ret_str
 
@@ -154,10 +155,13 @@ class BuzzRefereeHandler(webapp.RequestHandler):
   def force_post(self):
     # get consumption posts
     posts = self.client.posts(type_id='@consumption', user_id='@me').data
+    print 'num posts = %i' % len(posts)
 
     ret_str = ''
 
     for p in posts:
+      print p
+      print '\n'
       if p.placeholder is None and \
           p.actor.id != utils.consts.BUZZREFEREE_ID:
         try:

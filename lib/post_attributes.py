@@ -29,6 +29,7 @@ post attributes extracted:
 
 import types
 import re
+import logging
 import buzz 
 import utils.consts
 
@@ -37,8 +38,13 @@ class PostAttributes(object):
     self.attributes = {'lc':None, 'sc':None, 'mc':None, 'fc':None, 'mw':None, 'fw':None, 'ml':None, 'fl':None, 'op':None, 'first':None, 'last':None, 'caller':None, 'creator':utils.consts.BUZZREF_CREATOR_ID, 'num_times_ref_called':0, 'num_times_ref_replied':0, 'num_comments':0}
     # map of actors to # of comments
     self.commenters = {}
+    self.commenters_o = {}
+    self.comment_sizes = {}
+    self.number_of_words = {}
+    self.number_of_links = {}
     self.attributes['op'] = post.actor.id
     self.update_attributes(post)
+    self.set('first', None)
 
   def to_str(self):
     ret_str = ''
@@ -71,9 +77,15 @@ class PostAttributes(object):
 
     # attribute extraction
     comment_size = len(comment_content)
-    num_comments = self.commenters[comment.actor]
+    self.comment_sizes[commenter_id] = \
+      self.comment_sizes.get(commenter_id,0) + comment_size
+    num_comments = self.commenters[commenter_id]
     num_words = len(comment_content.split())
-    num_links = comment_content.count('a href')
+    self.number_of_words[commenter_id] = \
+      self.number_of_words.get(commenter_id,0) + num_words
+    num_links = comment_content.count('a href') - comment_content.count('href="http://www.google.com/profiles/')
+    self.number_of_links[commenter_id] = \
+      self.number_of_links.get(commenter_id,0) + num_links
 
     # first!!1!1
     if self.get('first') == None:
@@ -90,30 +102,32 @@ class PostAttributes(object):
     if commenter_id == utils.consts.BUZZREFEREE_ID:
       self.set('num_times_ref_replied', self.get('num_times_ref_replied') + 1)
 
-    # longest/shortest comment
-    self.set_paired_attributes('lc','sc', comment_size, commenter_id)
-    # most/fewest comments
-    self.set_paired_attributes('mc','fc', num_comments, commenter_id)
-    # most/fewest words
-    self.set_paired_attributes('mw','fw', num_words, commenter_id)
-    # most/fewest links
-    self.set_paired_attributes('ml','fl', num_links, commenter_id)
+  def finalize_attributes(self):
+    # set most/least for:
+    # lc/sc, mc/fc, mw/fw, ml/fl
+    comment_sizes_sorted = self.get_sorted_grouped(self.comment_sizes)
+    num_comments_sorted = self.get_sorted_grouped(self.commenters)
+    number_of_words_sorted = self.get_sorted_grouped(self.number_of_words)
+    number_of_links_sorted = self.get_sorted_grouped(self.number_of_links)
 
-  def set_paired_attributes(self, l_attrib, s_attrib, val, actor_id):
-    if self.get(l_attrib) is None:
-      self.set(l_attrib, [val, set([actor_id])])
-      self.set(s_attrib, [val, set([actor_id])])
-    else:
-      l = self.get(l_attrib)
-      s = self.get(s_attrib)
-      if val > l[0]:
-        self.set(l_attrib, [val, set([actor_id])])
-      elif val == l[0]:
-        self.get(l_attrib)[1].add(actor_id)
-      if val < s[0]:
-        self.set(s_attrib, [val, set([actor_id])])
-      elif val == s[0]:
-        self.get(s_attrib)[1].add(actor_id)
+    if len(comment_sizes_sorted) > 0:
+      self.set('lc', comment_sizes_sorted[-1][1])
+      self.set('sc', comment_sizes_sorted[0][1])
+    if len(num_comments_sorted) > 0:
+      self.set('mc', num_comments_sorted[-1][1])
+      self.set('fc', num_comments_sorted[0][1])
+    if len(number_of_words_sorted) > 0:
+      self.set('mw', number_of_words_sorted[-1][1])
+      self.set('fw', number_of_words_sorted[0][1])
+    if len(number_of_links_sorted) > 0:
+      self.set('ml', number_of_links_sorted[-1][1])
+      self.set('fl', number_of_links_sorted[0][1])
+
+  def get_sorted_grouped(self, d):
+    out = {}
+    for k in d:
+      out.setdefault(d[k], []).append(k)
+    return sorted(out.items())
 
   # determine if the comment is @-mentioning buzzreferee
   def comment_calls_ref(self, content):
@@ -124,18 +138,21 @@ class PostAttributes(object):
     return False
 
   def add_to_commenters(self, actor):
-    if actor in self.commenters:
-      self.commenters[actor] += 1
+    if actor.id in self.commenters:
+      self.commenters[actor.id] = self.commenters[actor.id] + 1
     else:
-      self.commenters[actor] = 1
+      self.commenters[actor.id] = 1
+      self.commenters_o[actor.id] = actor
 
   def get_matches(self, winner_id):
     matches = []
     for a in self.attributes.keys():
       if type(self.attributes[a]) is types.ListType:
-        if winner_id in self.attributes[a][1]:
+        logging.info('attribute: %s' % a)
+        logging.info(self.attributes[a])
+        if winner_id in self.attributes[a]:
           if (a == 'fc' or a == 'fl') and \
-              len(self.attributes[a][1]) > (len(self.commenters) * 0.25):
+              len(self.attributes[a]) > (len(self.commenters) * 0.40):
             continue
           matches.append(a)
       elif type(self.attributes[a]) is types.UnicodeType or \

@@ -10,6 +10,7 @@ a decision string to the handler.
 
 from google.appengine.ext import db
 import random
+import logging
 import lib.post_attributes
 import utils.consts
 import models.phrase
@@ -36,7 +37,10 @@ class Referee(object):
       else:
         attributes.set('last', self.post.actor.id)
 
-      self.winner = random.choice(attributes.commenters.keys())
+      attributes.finalize_attributes()
+
+      winner_id = random.choice(attributes.commenters.keys())
+      self.winner = attributes.commenters_o[winner_id]
 
       self._ref_decision = self.build_referee_decision(attributes)
       if self._ref_decision == '':
@@ -52,8 +56,10 @@ class Referee(object):
     if attributes.get('num_times_ref_replied') == 1 and attributes.get('num_times_ref_called') > 1:
       return self.get_random_phrase('already_called')
     elif attributes.get('num_times_ref_replied') >= 2:
+      logging.info('build_referee_decision: Returning None because num_times_ref_replied >= 2')
       return None
     elif attributes.get('num_times_ref_replied') == attributes.get('num_times_ref_called'):
+      logging.info('build_referee_decision: Returning None because num_times_ref_replied == num_times_ref_called')
       return None
     
     # check if original poster is caller and there are no other comments
