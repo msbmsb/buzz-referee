@@ -1,6 +1,6 @@
 **Buzz Referee** is a Google Buzz bot a user can @-mention for a reasoned, but random, arbitration to decide who "wins" the discussion/argument/thread. 
 
-Just @-mention buzzreferee in a post or comment by including: 
+Just @-mention buzzreferee in a public post or comment by including: 
     @buzzreferee@gmail.com
 
 * Buzz Referee runs on Google App Engine at <http://buzz-referee.appspot.com/>
