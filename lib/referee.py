@@ -117,7 +117,7 @@ class Referee(object):
     phrase = phrases.filter('type =',type_in).fetch(limit = 1, offset = r-1)[0]
     return phrase.str.replace(utils.consts.NAME_PLACEHOLDER, '*'+self.winner.name+'*').replace('  ', ' ')
 
-  # given that the previsoud 'begin' phrase may end with a determiner,
+  # given that the previous 'begin' phrase may end with a determiner,
   # make sure the DT agrees with the next adjective
   def get_DT(self, begin, adj):
     if begin[-1] != 'a':
