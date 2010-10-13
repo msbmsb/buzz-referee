@@ -83,9 +83,12 @@ class PostAttributes(object):
     num_words = len(comment_content.split())
     self.number_of_words[commenter_id] = \
       self.number_of_words.get(commenter_id,0) + num_words
-    num_links = comment_content.count('a href') - comment_content.count('href="http://www.google.com/profiles/')
-    self.number_of_links[commenter_id] = \
-      self.number_of_links.get(commenter_id,0) + num_links
+    # every buzz comment has at least two links
+    # one for the user profile, one for the comment permalink
+    num_links = comment_content.count('a href') - 2
+    if num_links > 0:
+      self.number_of_links[commenter_id] = \
+        self.number_of_links.get(commenter_id,0) + num_links
 
     # first!!1!1
     if self.get('first') == None:
