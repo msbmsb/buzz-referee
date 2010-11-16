@@ -23,6 +23,7 @@ import logging
 
 import lib.referee
 import utils.consts
+from models.decision_cache import DecisionCache
 
 OAUTH_CONFIG = yaml.load(open('oauth.yaml').read())
 
@@ -96,9 +97,6 @@ class BuzzRefereeHandler(webapp.RequestHandler):
 
   # get available posts for examination and queue the posts one-at-a-time
   # in the taskqueue
-  # TODO: cache the posts in consumption feed that are no longer 
-  # repliable, i.e. buzzreferee has already replied the max times
-  # and check before adding to taskqueue
   # filtering by dates is not desired - old posts are just as eligible as new
   def queue_ref(self):
     # get consumption posts
@@ -107,7 +105,9 @@ class BuzzRefereeHandler(webapp.RequestHandler):
     ret_str = '#posts: ' + str(len(posts)) + '<br />'
 
     for post in posts:
-      if post.placeholder is None and \
+      
+      if DecisionCache.get_by_key_name(str(post.id[25:])) is None and \
+          post.placeholder is None and \
           post.actor.id != utils.consts.BUZZREFEREE_ID:
         try:
           result_task = taskqueue.Task(
@@ -132,12 +132,21 @@ class BuzzRefereeHandler(webapp.RequestHandler):
     logging.info('ref_post called with id: ' + post_id)
     try:
       post = self.client.post(post_id).data
-      decision = lib.referee.Referee(post).referee_decision
+      ref = lib.referee.Referee(post)
+      decision = ref.referee_decision
       if decision is not None:
         # post here
         try:
           new_comment = buzz.Comment(content=decision, post_id=post_id)
           self.client.create_comment(new_comment)
+
+          # cache this decision
+          pid = str(post.id[25:])
+          if DecisionCache.get_by_key_name(pid) is None:
+            new_decision = DecisionCache(key_name=pid)
+            new_decision.winner_id = str(ref.winner.id)
+            new_decision.put()
+
           ret_str = "Writing comment: " + decision + "<br />" + \
               "to post.id = " + post.id
         except:

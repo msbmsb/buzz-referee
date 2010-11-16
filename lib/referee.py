@@ -13,7 +13,8 @@ import random
 import logging
 import lib.post_attributes
 import utils.consts
-import models.phrase
+from models.phrase import Phrase
+from models.decision_cache import DecisionCache
 
 class Referee(object):
   def __init__(self, post):
@@ -43,8 +44,13 @@ class Referee(object):
       self.winner = attributes.commenters_o[winner_id]
 
       self._ref_decision = self.build_referee_decision(attributes)
-      if self._ref_decision == '':
+      if self._ref_decision == '' or self._ref_decision == None:
         self._ref_decision = None
+        # cache this post as already decided on
+        pid = str(self.post.id[25:])
+        if DecisionCache.get_by_key_name(pid) is None:
+          new_decision = DecisionCache(key_name=pid)
+          new_decision.put()
     return self._ref_decision
 
   # construct the final decision string
@@ -106,7 +112,7 @@ class Referee(object):
   # select a random phrase from the given type
   def get_random_phrase(self, type_in):
     random.seed()
-    phrases = models.phrase.Phrase.all()
+    phrases = Phrase.all()
     cnt = phrases.filter('type =',type_in).count(1000)
     if cnt == 0:
       return ''

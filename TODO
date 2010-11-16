@@ -1,5 +1,3 @@
-* Cache post ids already responded to
-** cache winners of responses
 * Reduce probability of 'no_reason' responses due to large number of individual commenters on a post
 * Set up bulk loader for data reloading
 * add response that considers if winner is also a previous winner
